@@ -19,10 +19,12 @@ import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 import tripPricer.Provider;
 
-public class TestTourGuideService {
+public class TestTourGuideService
+{
 
 	@Test
-	public void getUserLocation() {
+	public void getUserLocation()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -35,7 +37,8 @@ public class TestTourGuideService {
 	}
 
 	@Test
-	public void addUser() {
+	public void addUser()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -57,7 +60,8 @@ public class TestTourGuideService {
 	}
 
 	@Test
-	public void getAllUsers() {
+	public void getAllUsers()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -78,7 +82,8 @@ public class TestTourGuideService {
 	}
 
 	@Test
-	public void trackUser() {
+	public void trackUser()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -94,7 +99,8 @@ public class TestTourGuideService {
 
 	@Disabled // Not yet implemented
 	@Test
-	public void getNearbyAttractions() {
+	public void getNearbyAttractions()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -110,7 +116,8 @@ public class TestTourGuideService {
 		assertEquals(5, attractions.size());
 	}
 
-	public void getTripDeals() {
+	public void getTripDeals()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);

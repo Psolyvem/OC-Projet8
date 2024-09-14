@@ -20,22 +20,23 @@ import com.openclassrooms.tourguide.service.RewardsService;
 import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 
-public class TestPerformance {
+public class TestPerformance
+{
 
 	/*
 	 * A note on performance improvements:
-	 * 
+	 *
 	 * The number of users generated for the high volume tests can be easily
 	 * adjusted via this method:
-	 * 
+	 *
 	 * InternalTestHelper.setInternalUserNumber(100000);
-	 * 
-	 * 
+	 *
+	 *
 	 * These tests can be modified to suit new solutions, just as long as the
 	 * performance metrics at the end of the tests remains consistent.
-	 * 
+	 *
 	 * These are performance metrics that we are trying to hit:
-	 * 
+	 *
 	 * highVolumeTrackLocation: 100,000 users within 15 minutes:
 	 * assertTrue(TimeUnit.MINUTES.toSeconds(15) >=
 	 * TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
@@ -47,7 +48,8 @@ public class TestPerformance {
 
 	@Disabled
 	@Test
-	public void highVolumeTrackLocation() {
+	public void highVolumeTrackLocation()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
@@ -60,7 +62,8 @@ public class TestPerformance {
 
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
-		for (User user : allUsers) {
+		for (User user : allUsers)
+		{
 			tourGuideService.trackUserLocation(user);
 		}
 		stopWatch.stop();
@@ -73,7 +76,8 @@ public class TestPerformance {
 
 	@Disabled
 	@Test
-	public void highVolumeGetRewards() {
+	public void highVolumeGetRewards()
+	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
@@ -91,7 +95,8 @@ public class TestPerformance {
 
 		allUsers.forEach(u -> rewardsService.calculateRewards(u));
 
-		for (User user : allUsers) {
+		for (User user : allUsers)
+		{
 			assertTrue(user.getUserRewards().size() > 0);
 		}
 		stopWatch.stop();
