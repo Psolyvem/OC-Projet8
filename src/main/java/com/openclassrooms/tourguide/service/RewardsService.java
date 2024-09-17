@@ -1,21 +1,19 @@
 package com.openclassrooms.tourguide.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Semaphore;
-
-import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.stereotype.Service;
-
+import com.openclassrooms.tourguide.user.User;
+import com.openclassrooms.tourguide.user.UserReward;
 import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
+import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.stereotype.Service;
 import org.tinylog.Logger;
 import rewardCentral.RewardCentral;
-import com.openclassrooms.tourguide.user.User;
-import com.openclassrooms.tourguide.user.UserReward;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 
 @Service
 public class RewardsService
@@ -45,33 +43,48 @@ public class RewardsService
 		proximityBuffer = defaultProximityBuffer;
 	}
 
-	public synchronized void calculateRewards(User user)
+	public synchronized Future<UserReward> calculateRewards(User user)
 	{
-		Logger.info("function is called");
-		StopWatch stopWatch1 = new StopWatch();
-		stopWatch1.start();
+		StopWatch stopWatch = new StopWatch();
+		stopWatch.start();
 		List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
 		List<Attraction> attractions = gpsUtil.getAttractions();
+		Future<UserReward> result = null;
+		ExecutorService executor = Executors.newCachedThreadPool();
 
-		for (VisitedLocation visitedLocation : userLocations)
+		try
 		{
-			for (Attraction attraction : attractions)
+			for (VisitedLocation visitedLocation : userLocations)
 			{
-				if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName)))
+				for (Attraction attraction : attractions)
 				{
-					if (nearAttraction(visitedLocation, attraction))
+					if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName)))
 					{
-						StopWatch stopWatch2 = new StopWatch();
-						stopWatch2.start();
-						user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-						stopWatch2.stop();
-						Logger.info("Added Reward in " + stopWatch2.getTime() + "ms");
+						if (nearAttraction(visitedLocation, attraction))
+						{
+							result = executor.submit(() ->
+							{
+								UserReward reward = new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user));
+								user.addUserReward(reward);
+								return reward;
+							});
+							break;
+						}
 					}
 				}
 			}
 		}
-		stopWatch1.stop();
-		Logger.info("Calculated Reward in " + stopWatch1.getTime() + "ms");
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			executor.shutdown();
+		}
+		stopWatch.stop();
+		Logger.info("Calculated reward in : " + stopWatch.getTime());
+		return result;
 	}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location)
@@ -84,7 +97,7 @@ public class RewardsService
 		return getDistance(attraction, visitedLocation.location) <= proximityBuffer;
 	}
 
-	private int getRewardPoints(Attraction attraction, User user)
+	public int getRewardPoints(Attraction attraction, User user)
 	{
 		return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
 	}

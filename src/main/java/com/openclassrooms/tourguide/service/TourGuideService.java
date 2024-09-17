@@ -103,14 +103,42 @@ public class TourGuideService
 
 	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation)
 	{
+
 		List<Attraction> nearbyAttractions = new ArrayList<>();
-		for (Attraction attraction : gpsUtil.getAttractions())
+		List<Attraction> attractions = gpsUtil.getAttractions();
+		attractions.sort((attraction1, attraction2) ->
 		{
-			if (rewardsService.isWithinAttractionProximity(attraction, visitedLocation.location))
+			Location location1 = new Location(attraction1.latitude, attraction1.longitude);
+			Location location2 = new Location(attraction2.latitude, attraction2.longitude);
+			double distanceTo1 = rewardsService.getDistance(visitedLocation.location, location1);
+			double distanceTo2 = rewardsService.getDistance(visitedLocation.location, location2);
+			if (distanceTo1 < distanceTo2)
 			{
-				nearbyAttractions.add(attraction);
+				return -1;
 			}
+			else if (distanceTo1 == distanceTo2)
+			{
+				return 0;
+			}
+			else if (distanceTo1 > distanceTo2)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		});
+		for (int i = 0; i < 5; i++)
+		{
+			nearbyAttractions.add(attractions.get(i));
 		}
+
+//		org.tinylog.Logger.info("Nearby " + nearbyAttractions.size() +  " attractions : ");
+//		for(int i = 0; i < 5; i++)
+//		{
+//			org.tinylog.Logger.info("	- " + nearbyAttractions.get(i).attractionName + ", distance : " + rewardsService.getDistance(visitedLocation.location, new Location(nearbyAttractions.get(i).latitude, nearbyAttractions.get(i).longitude)));
+//		}
 
 		return nearbyAttractions;
 	}
