@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -38,12 +39,14 @@ public class TourGuideService
 	private final RewardsService rewardsService;
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
+	public ExecutorService executor;
 	boolean testMode = true;
 
 	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService)
 	{
 		this.gpsUtil = gpsUtil;
 		this.rewardsService = rewardsService;
+		this.executor = Executors.newFixedThreadPool(600);
 
 		Locale.setDefault(Locale.US);
 
@@ -54,9 +57,9 @@ public class TourGuideService
 			initializeInternalUsers();
 			logger.debug("Finished initializing users");
 		}
-		// Enlever l'ExecutorService
 		tracker = new Tracker(this);
-		addShutDownHook();
+		tracker.start();
+		addShutDownHook(this);
 	}
 
 	public VisitedLocation getUserLocation(User user)
@@ -96,9 +99,38 @@ public class TourGuideService
 	public VisitedLocation trackUserLocation(User user)
 	{
 		VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
-		user.addToVisitedLocations(visitedLocation);
-		rewardsService.calculateRewards(user);
+		executor.submit(() ->
+		{
+			user.addToVisitedLocations(visitedLocation);
+			rewardsService.calculateRewards(user);
+		});
 		return visitedLocation;
+	}
+
+	public void batchTrackUsersLocation(List<User> users)
+	{
+		List<Callable<Void>> tasks = new ArrayList<>();
+		try
+		{
+			for (User user : users)
+			{
+				tasks.add(() ->
+				{
+					trackUserLocation(user);
+					return null;
+				});
+			}
+
+			List<Future<Void>> results = executor.invokeAll(tasks);
+			for (Future<Void> result : results)
+			{
+				result.get();
+			}
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			org.tinylog.Logger.info("Thread interrupted while tracking users in batch : " + e + " from " + Thread.currentThread().getName());
+		}
 	}
 
 	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation)
@@ -134,24 +166,16 @@ public class TourGuideService
 			nearbyAttractions.add(attractions.get(i));
 		}
 
-//		org.tinylog.Logger.info("Nearby " + nearbyAttractions.size() +  " attractions : ");
-//		for(int i = 0; i < 5; i++)
-//		{
-//			org.tinylog.Logger.info("	- " + nearbyAttractions.get(i).attractionName + ", distance : " + rewardsService.getDistance(visitedLocation.location, new Location(nearbyAttractions.get(i).latitude, nearbyAttractions.get(i).longitude)));
-//		}
-
 		return nearbyAttractions;
 	}
 
-	private void addShutDownHook()
+	private void addShutDownHook(TourGuideService tourGuideService)
 	{
-		Runtime.getRuntime().addShutdownHook(new Thread()
+		Runtime.getRuntime().addShutdownHook(new Thread(() ->
 		{
-			public void run()
-			{
-				tracker.stopTracking();
-			}
-		});
+			tracker.stopTracking();
+			tourGuideService.executor.shutdown();
+		}));
 	}
 
 	/**********************************************************************************

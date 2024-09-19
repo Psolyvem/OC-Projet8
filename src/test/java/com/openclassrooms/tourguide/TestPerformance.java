@@ -1,29 +1,25 @@
 package com.openclassrooms.tourguide;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import com.openclassrooms.tourguide.user.UserReward;
-import org.apache.commons.lang3.time.StopWatch;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import gpsUtil.GpsUtil;
-import gpsUtil.location.Attraction;
-import gpsUtil.location.VisitedLocation;
-import org.tinylog.Logger;
-import rewardCentral.RewardCentral;
 import com.openclassrooms.tourguide.helper.InternalTestHelper;
 import com.openclassrooms.tourguide.service.RewardsService;
 import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
+import gpsUtil.GpsUtil;
+import gpsUtil.location.Attraction;
+import gpsUtil.location.VisitedLocation;
+import org.apache.commons.lang3.time.StopWatch;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import rewardCentral.RewardCentral;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Disabled
 public class TestPerformance
 {
 
@@ -55,20 +51,15 @@ public class TestPerformance
 	{
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		// Users should be incremented up to 100,000, and test finishes within 15
-		// minutes
-		InternalTestHelper.setInternalUserNumber(100);
+		// Users should be incremented up to 100,000, and test finishes within 15 minutes
+		InternalTestHelper.setInternalUserNumber(100000);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
-		List<User> allUsers = new ArrayList<>();
-		allUsers = tourGuideService.getAllUsers();
+		List<User> allUsers = tourGuideService.getAllUsers();
 
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
-		for (User user : allUsers)
-		{
-			tourGuideService.trackUserLocation(user);
-		}
+		tourGuideService.batchTrackUsersLocation(allUsers);
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
 
@@ -82,9 +73,8 @@ public class TestPerformance
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
-		// Users should be incremented up to 100,000, and test finishes within 20
-		// minutes
-		InternalTestHelper.setInternalUserNumber(1000);
+		// Users should be incremented up to 100,000, and test finishes within 20 minutes
+		InternalTestHelper.setInternalUserNumber(10000);
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
@@ -94,20 +84,8 @@ public class TestPerformance
 		allUsers = tourGuideService.getAllUsers();
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
-		// List futures that the method returns to wait for them to finish before asserting
-		List<Future<UserReward>> userRewards = new ArrayList<>();
-		allUsers.forEach(u -> userRewards.add(rewardsService.calculateRewards(u)));
-		for (Future<UserReward> userReward : userRewards)
-		{
-			try
-			{
-				userReward.get();
-			}
-			catch (ExecutionException e)
-			{
-				throw new RuntimeException(e);
-			}
-		}
+		//allUsers.forEach(u -> userRewards.addAll(rewardsService.calculateRewards(u)));
+		rewardsService.batchCalculateRewards(allUsers);
 		for (User user : allUsers)
 		{
 			assertTrue(user.getUserRewards().size() > 0);

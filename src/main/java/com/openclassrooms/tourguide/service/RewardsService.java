@@ -6,7 +6,6 @@ import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
-import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.stereotype.Service;
 import org.tinylog.Logger;
 import rewardCentral.RewardCentral;
@@ -43,15 +42,12 @@ public class RewardsService
 		proximityBuffer = defaultProximityBuffer;
 	}
 
-	public synchronized Future<UserReward> calculateRewards(User user)
+	public void calculateRewards(User user)
 	{
-		StopWatch stopWatch = new StopWatch();
-		stopWatch.start();
 		List<VisitedLocation> userLocations = new ArrayList<>(user.getVisitedLocations());
 		List<Attraction> attractions = gpsUtil.getAttractions();
-		Future<UserReward> result = null;
+		List<Future<?>> results = new ArrayList<>();
 		ExecutorService executor = Executors.newCachedThreadPool();
-
 		try
 		{
 			for (VisitedLocation visitedLocation : userLocations)
@@ -60,31 +56,58 @@ public class RewardsService
 				{
 					if (user.getUserRewards().stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName)))
 					{
-						if (nearAttraction(visitedLocation, attraction))
+						synchronized (user)
 						{
-							result = executor.submit(() ->
+							if (nearAttraction(visitedLocation, attraction))
 							{
-								UserReward reward = new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user));
-								user.addUserReward(reward);
-								return reward;
-							});
-							break;
+								results.add(executor.submit(() -> user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)))));
+							}
 						}
 					}
 				}
 			}
+			for (Future<?> result : results)
+			{
+				result.get();
+			}
 		}
-		catch (Exception e)
+		catch (InterruptedException | ExecutionException e)
 		{
-			e.printStackTrace();
+			Logger.info("Thread interrupted while calculating rewards : " + e + " from " + Thread.currentThread().getName());
 		}
 		finally
 		{
 			executor.shutdown();
 		}
-		stopWatch.stop();
-		Logger.info("Calculated reward in : " + stopWatch.getTime());
-		return result;
+	}
+
+	public void batchCalculateRewards(List<User> users)
+	{
+		ExecutorService executor = Executors.newFixedThreadPool(600);
+		List<Callable<Void>> tasks = new ArrayList<>();
+
+		try
+		{
+			for (User user : users)
+			{
+				tasks.add(() -> {calculateRewards(user); return null;});
+			}
+
+			List<Future<Void>> results = executor.invokeAll(tasks);
+			for(Future<Void> result : results)
+			{
+				result.get();
+			}
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			Logger.info("Thread interrupted while calculating rewards in batch : " + e + " from " + Thread.currentThread().getName());
+		}
+		finally
+		{
+			executor.shutdown();
+		}
+
 	}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location)
