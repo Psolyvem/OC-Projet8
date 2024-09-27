@@ -3,6 +3,7 @@ on : [ push, pull_request ]
 
 jobs :
   build :
+    name: Build
     runs-on : ubuntu-latest
     #    container :
     #      image : maven
@@ -43,6 +44,7 @@ jobs :
         run : mvn clean site -DskipTests
 
   unit-tests :
+    name: Unit Tests
     runs-on : ubuntu-latest
     steps :
       - name : Get code
@@ -72,10 +74,11 @@ jobs :
           path : ~/.m2/repository
           key : ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name : Test Tourguide
+      - name : Test Tourguide (unit)
         run : mvn clean test -Punit-tests
 
   performance-tests :
+    name: Performance Tests
     runs-on : ubuntu-latest
     steps :
       - name : Get code
@@ -105,5 +108,5 @@ jobs :
           path : ~/.m2/repository
           key : ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name : Test Tourguide
+      - name : Test Tourguide (performances)
         run : mvn clean test -Pperformance-tests
