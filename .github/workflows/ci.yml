@@ -1,0 +1,25 @@
+name : CI Tourguide
+on : [ push, pull_request ]
+
+jobs :
+  build :
+    runs-on : ubuntu-latest
+#    container :
+#      image : maven
+    steps :
+      - name : Get code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 19
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '19'
+
+      - name : Set up Maven
+        uses : stCarolas/setup-maven@v5
+        with :
+          maven-version : 3.8.7
+
+      - name : Build Tourguide
+        run : mvn clean site
