@@ -26,12 +26,18 @@ jobs :
         with :
           maven-version : 3.8.7
 
-      - name: Install manual depencies
+      - name: Install manual dependencies
         run : |
           echo pwd
           mvn install:install-file -Dfile="./libs/gpsUtil.jar" -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
           mvn install:install-file -Dfile="./libs/RewardCentral.jar" -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
           mvn install:install-file -Dfile="./libs/TripPricer.jar" -DgroupId=tripPricer -DartifactId=tripPricer -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
       - name : Build Tourguide
         run : mvn clean site
