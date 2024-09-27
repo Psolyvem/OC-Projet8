@@ -4,40 +4,106 @@ on : [ push, pull_request ]
 jobs :
   build :
     runs-on : ubuntu-latest
-#    container :
-#      image : maven
+    #    container :
+    #      image : maven
     steps :
-#      - name: Set up everything
-#        uses: s4u/setup-maven-action@v1.14.0
-#        with :
-#          java-version : 19
-#          maven-version : 3.8.7
+      #      - name: Set up everything
+      #        uses: s4u/setup-maven-action@v1.14.0
+      #        with :
+      #          java-version : 19
+      #          maven-version : 3.8.7
       - name : Get code
-        uses: actions/checkout@v4
+        uses : actions/checkout@v4
 
-      - name: Set up JDK 19
-        uses: actions/setup-java@v4.4.0
-        with:
-          distribution: 'temurin'
-          java-version: '19'
+      - name : Set up JDK 19
+        uses : actions/setup-java@v4.4.0
+        with :
+          distribution : 'temurin'
+          java-version : '19'
 
       - name : Set up Maven
         uses : stCarolas/setup-maven@v5
         with :
           maven-version : 3.8.7
 
-      - name: Install manual dependencies
+      - name : Install manual dependencies
         run : |
           echo pwd
           mvn install:install-file -Dfile="./libs/gpsUtil.jar" -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
           mvn install:install-file -Dfile="./libs/RewardCentral.jar" -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
           mvn install:install-file -Dfile="./libs/TripPricer.jar" -DgroupId=tripPricer -DartifactId=tripPricer -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
 
-      - name: Cache dependencies
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name : Cache dependencies
+        uses : actions/cache@v4.0.2
+        with :
+          path : ~/.m2/repository
+          key : ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
       - name : Build Tourguide
-        run : mvn clean site
+        run : mvn clean site -DskipTests
+
+  unit-tests :
+    runs-on : ubuntu-latest
+    steps :
+      - name : Get code
+        uses : actions/checkout@v4
+
+      - name : Set up JDK 19
+        uses : actions/setup-java@v4.4.0
+        with :
+          distribution : 'temurin'
+          java-version : '19'
+
+      - name : Set up Maven
+        uses : stCarolas/setup-maven@v5
+        with :
+          maven-version : 3.8.7
+
+      - name : Install manual dependencies
+        run : |
+          echo pwd
+          mvn install:install-file -Dfile="./libs/gpsUtil.jar" -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile="./libs/RewardCentral.jar" -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile="./libs/TripPricer.jar" -DgroupId=tripPricer -DartifactId=tripPricer -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+
+      - name : Cache dependencies
+        uses : actions/cache@v4.0.2
+        with :
+          path : ~/.m2/repository
+          key : ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name : Test Tourguide
+        run : mvn clean test -Punit-tests
+
+  performance-tests :
+    runs-on : ubuntu-latest
+    steps :
+      - name : Get code
+        uses : actions/checkout@v4
+
+      - name : Set up JDK 19
+        uses : actions/setup-java@v4.4.0
+        with :
+          distribution : 'temurin'
+          java-version : '19'
+
+      - name : Set up Maven
+        uses : stCarolas/setup-maven@v5
+        with :
+          maven-version : 3.8.7
+
+      - name : Install manual dependencies
+        run : |
+          echo pwd
+          mvn install:install-file -Dfile="./libs/gpsUtil.jar" -DgroupId=gpsUtil -DartifactId=gpsUtil -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile="./libs/RewardCentral.jar" -DgroupId=rewardCentral -DartifactId=rewardCentral -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile="./libs/TripPricer.jar" -DgroupId=tripPricer -DartifactId=tripPricer -Dversion="1.0.0" -Dpackaging=jar -DgeneratePom=true
+
+      - name : Cache dependencies
+        uses : actions/cache@v4.0.2
+        with :
+          path : ~/.m2/repository
+          key : ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name : Test Tourguide
+        run : mvn clean test -Pperformance-tests
