@@ -46,9 +46,9 @@ jobs :
 
       - name : Copy artifact
         run : |
+          mkdir release
           cd target
-          ls -la
-          mkdir release && cp /target/*.jar /release
+          cp *.jar ../release
 
   unit-tests :
     name: Unit Tests
