@@ -87,7 +87,7 @@ public class TourGuideService
 			internalUserMap.put(user.getUserName(), user);
 		}
 	}
-
+	
 	public List<Provider> getTripDeals(User user)
 	{
 		int cumulatativeRewardPoints = user.getUserRewards().stream().mapToInt(i -> i.getRewardPoints()).sum();

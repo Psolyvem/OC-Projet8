@@ -21,6 +21,7 @@ jobs :
         with :
           distribution : 'temurin'
           java-version : '19'
+          cache: maven
 
       - name : Set up Maven
         uses : stCarolas/setup-maven@v5
