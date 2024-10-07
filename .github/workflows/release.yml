@@ -1,5 +1,9 @@
 name : Release Tourguide
 on:
+  workflow_run :
+    workflows : [ "CI Tourguide" ]
+    types :
+      - completed
   push:
     tags:
       - '*.*.*'
