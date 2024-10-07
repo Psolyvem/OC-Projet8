@@ -68,8 +68,6 @@ public class TourGuideService
 		return visitedLocation;
 	}
 
-	// Got rid of useless getUserReward Method
-
 	public User getUser(String userName)
 	{
 		return internalUserMap.get(userName);
