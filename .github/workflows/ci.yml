@@ -45,7 +45,10 @@ jobs :
         run : mvn clean install -DskipTests
 
       - name : Copy artifact
-        run : mkdir release && cp /target/*.jar /release
+        run : |
+          cd target
+          ls -la
+          mkdir release && cp /target/*.jar /release
 
   unit-tests :
     name: Unit Tests
