@@ -3,7 +3,7 @@ on : [ push, pull_request ]
 
 jobs :
   build :
-    name: Build
+    name : Build
     runs-on : ubuntu-latest
     #    container :
     #      image : maven
@@ -21,7 +21,7 @@ jobs :
         with :
           distribution : 'temurin'
           java-version : '19'
-          cache: maven
+          cache : maven
 
       - name : Set up Maven
         uses : stCarolas/setup-maven@v5
@@ -44,14 +44,15 @@ jobs :
       - name : Build Tourguide
         run : mvn clean install -DskipTests
 
-      - name : Copy artifact
-        run : |
-          mkdir release
-          cd target
-          cp *.jar ../release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4.4.1
+        with :
+          name : tourguide-jar
+          path : target/*.jar
+
 
   unit-tests :
-    name: Unit Tests
+    name : Unit Tests
     runs-on : ubuntu-latest
     steps :
       - name : Get code
@@ -85,7 +86,7 @@ jobs :
         run : mvn clean test -Punit-tests
 
   performance-tests :
-    name: Performance Tests
+    name : Performance Tests
     runs-on : ubuntu-latest
     steps :
       - name : Get code
@@ -126,13 +127,18 @@ jobs :
       - name : Get code
         uses : actions/checkout@v4
 
-#      - name : Check if master
-#        id : check_branch
-#        run : |
-#            if [ "${{ github.ref }}" != "refs/heads/master" ]; then
-#              echo "Not on master branch, skipping release."
-#              exit 0
-#            fi
+      #      - name : Check if master
+      #        id : check_branch
+      #        run : |
+      #            if [ "${{ github.ref }}" != "refs/heads/master" ]; then
+      #              echo "Not on master branch, skipping release."
+      #              exit 0
+      #            fi
+
+      - name : Download artifact
+        uses : actions/download-artifact@v4.1.8
+        with :
+          name : tourguide-jar
 
       - name : Extract version from pom.xml
         id : extract_version
@@ -141,7 +147,7 @@ jobs :
           echo "Project version: $VERSION"
           echo "::set-output name=VERSION::$VERSION"
           ls -la
-          
+
 
       - name : Create GitHub Release
         uses : ncipollo/release-action@v1.14.0
@@ -150,4 +156,4 @@ jobs :
           name : 'Release ${{ steps.extract_version.outputs.VERSION }}'
           draft : false
           prerelease : false
-          artifacts : 'release/*.jar'
+          artifacts : '*.jar'
