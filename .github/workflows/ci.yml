@@ -126,17 +126,10 @@ jobs :
     name : Release
     needs : build
     runs-on : ubuntu-latest
+    if : github.ref == 'refs/heads/master'
     steps :
       - name : Get code
         uses : actions/checkout@v4
-
-      - name : Check if master
-        id : check_branch
-        run : |
-          if [ "${{ github.ref }}" != "refs/heads/master" ]; then
-            echo "Not on master branch, skipping release."
-            exit 0
-          fi
 
       - name : Download artifact
         uses : actions/download-artifact@v4.1.8
