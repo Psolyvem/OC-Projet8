@@ -139,6 +139,7 @@ jobs :
         uses : actions/download-artifact@v4.1.8
         with :
           name : tourguide-jar
+        run : ls -la
 
       - name : Extract version from pom.xml
         id : extract_version
@@ -150,7 +151,6 @@ jobs :
 
 
       - name : Create GitHub Release
-        run : ls -la
         uses : ncipollo/release-action@v1.14.0
         with :
           tag : ${{ steps.extract_version.outputs.VERSION }}
