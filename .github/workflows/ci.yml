@@ -49,6 +49,8 @@ jobs :
           mkdir release
           cd target
           cp *.jar ../release
+          echo "test"
+          ls -la
 
   unit-tests :
     name: Unit Tests
