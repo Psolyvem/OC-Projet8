@@ -2,7 +2,7 @@ name : Release Tourguide
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
 
 jobs :
   build :
